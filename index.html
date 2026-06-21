@@ -374,7 +374,6 @@ const CONFIG = {
     });
     const data = await res.json();
     console.log("Réponse Web3Forms:", data);
-    alert(data.success ? "Email envoyé ✅" : "ÉCHEC ❌ : " + data.message);
   } catch(e){
     alert("Erreur réseau ❌ : " + e.message);
   }
