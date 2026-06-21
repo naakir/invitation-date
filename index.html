@@ -50,14 +50,14 @@ const CONFIG = {
   /* la date et l'heure */
   schedule: {
     title: "Alors... avant que tu t'envoles ou après&nbsp;?",
-    button: "c'est noté&nbsp;!",
+    button: "c'est noté&nbsp;! ♥",
     // Créneaux proposés (format 24h "HH:MM"). Ajoute/enlève ce que tu veux.
     timeSlots: ["12:00","12:30","13:00","13:30","14:00","19:00","19:30","20:00","20:30","21:00"],
   },
 
   /* le mot de la fin pour la faire rager + l'évènement calendrier */
   final: {
-    title: "Je passe te chercher ne t'en fais pas, promis. ",
+    title: "content que tu n'aies pas dit non. je passe te chercher ne t'en fais pas, promis. ",
     subtitle: "les gens normaux envoient un message. J'ai préféré créer ce site pour toi. Ça va non ??",
   },
   event: {
@@ -359,21 +359,26 @@ const CONFIG = {
   }
 
   /* email via Web3Forms (aucun serveur requis) */
-  function sendEmail(dateFR){
-    if(!C.web3formsKey) return;
-    fetch("https://api.web3forms.com/submit",{
+  async function sendEmail(dateFR){
+  if(!C.web3formsKey){ alert("Pas de clé Web3Forms dans la config"); return; }
+  try {
+    const res = await fetch("https://api.web3forms.com/submit",{
       method:"POST",
       headers:{"Content-Type":"application/json","Accept":"application/json"},
       body:JSON.stringify({
         access_key:C.web3formsKey,
         subject:"💌 Elle a dit OUI — voici son choix",
         from_name:"Date Invite",
-        Resto:choices.food,
-        Jour:dateFR,
-        Heure:choices.time.replace(":","h"),
+        Resto:choices.food, Jour:dateFR, Heure:choices.time.replace(":","h"),
       })
-    }).catch(()=>{});
+    });
+    const data = await res.json();
+    console.log("Réponse Web3Forms:", data);
+    alert(data.success ? "Email envoyé ✅" : "ÉCHEC ❌ : " + data.message);
+  } catch(e){
+    alert("Erreur réseau ❌ : " + e.message);
   }
+}
 
   /* confettis */
   function burst(){
