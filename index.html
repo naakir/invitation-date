@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Une question pour toi...</title>
+
+<!-- ================================================================== -->
+<!--  ⚙️  ZONE À MODIFIER  —  tout est ici, tu ne touches à rien d'autre  -->
+<!-- ================================================================== -->
+<script>
+const CONFIG = {
+
+  /* ---- TES INFOS (pour recevoir le résultat par email) ---- */
+  // 1. Va sur https://web3forms.com → mets ton email → copie ta clé gratuite ici.
+  //    C'est ça qui t'envoie un mail avec ses réponses. Laisse vide pour tester sans email.
+  web3formsKey: "",
+
+  /* ---- ÉTAPE 1 : la question ---- */
+  ask: {
+    title: "Je peux t'inviter à ton retour ou avant que tu partes&nbsp;?",
+    //  URL d'image
+    image: "",
+    emoji: "🤏🏼",
+    yesLabel: "OUI 🫵🏼",
+    noLabel: "non 😡",
+  },
+
+  /* ---- ÉTAPE 2 : la réaction quand elle dit oui ---- */
+  celebrate: {
+    title: "ATTENDS TU AS VRAIMENT DIT OUI&nbsp;?? 👀",
+    subtitle: "C'est pas une blague vraiment",
+    button: "okay okay&nbsp;! →",
+  },
+
+
+  food: {
+    title: "On part sur quoi&nbsp;?",
+    subtitle: "choisis ta vibe",
+    options: [
+      { emoji: "🍕", label: "Pizza" },
+      { emoji: "🍣", label: "Sushi" },
+      { emoji: "🌯", label: "SHAWARMA" },
+      { emoji: "🍝", label: "Italien" },
+      { emoji: "🌮", label: "Tacos" },
+      { emoji: "🇮🇳", label: "Indien (pour la vanne)" },
+    ],
+  },
+
+  /* la date et l'heure */
+  schedule: {
+    title: "Alors... avant que tu t'envoles ou après&nbsp;?",
+    button: "c'est noté&nbsp;! ♥",
+    // Créneaux proposés (format 24h "HH:MM"). Ajoute/enlève ce que tu veux.
+    timeSlots: ["12:00","12:30","13:00","13:30","14:00","19:00","19:30","20:00","20:30","21:00"],
+  },
+
+  /* le mot de la fin pour la faire rager + l'évènement calendrier */
+  final: {
+    title: "content que tu n'aies pas dit non. je passe te chercher ne t'en fais pas, promis. ",
+    subtitle: "les gens normaux envoient un message. J'ai préféré créer ce site pour toi. Ça va non ??",
+  },
+  event: {
+    title: "Sortie avec Rayan",   // titre de l'évènement ajouté à son agenda
+    location: "Paris",            // lieu (laisse "" si non défini)
+    durationMinutes: 90,         // durée de l'évènement
+  },
+};
+</script>
+<!-- ================================================================== -->
+<!--  ⛔  CLAUDE NE PAS TOUCHER (sauf si tu veux jouer avec le style) -->
+<!-- ================================================================== -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg1:#f7d9e8; --bg2:#e4d4f4; --bg3:#fce8f0;
+    --card:#fffdfd; --ink:#5a2742; --ink-soft:#8a6a7c;
+    --rose:#c01f63; --rose-soft:#f4c4d8; --grape:#9b73c4;
+    --shadow:0 30px 70px -30px rgba(120,40,90,.45);
+    --serif:"Fraunces",Georgia,serif; --sans:"Nunito",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:var(--sans); color:var(--ink);
+    background:linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));
+    background-attachment:fixed;
+    display:grid; place-items:center; padding:24px; overflow-x:hidden;
+    min-height:100vh;
+  }
+  .stage{width:100%; max-width:480px; position:relative; z-index:2}
+  .card{
+    background:var(--card); border-radius:28px; padding:38px 30px;
+    box-shadow:var(--shadow); text-align:center;
+    animation:pop .5s cubic-bezier(.18,1.2,.4,1) both;
+  }
+  @keyframes pop{from{opacity:0; transform:translateY(18px) scale(.96)}to{opacity:1; transform:none}}
+  .avatar{
+    width:118px; height:118px; border-radius:24px; margin:0 auto 22px;
+    object-fit:cover; display:grid; place-items:center; font-size:58px;
+    background:linear-gradient(160deg,#f3e3f0,#e7d3f2);
+  }
+  h1{
+    font-family:var(--serif); font-weight:600; line-height:1.12;
+    font-size:clamp(26px,7vw,34px); margin:0 0 8px; letter-spacing:-.01em;
+  }
+  .sub{font-size:15px; color:var(--ink-soft); margin:0 0 26px; line-height:1.45}
+  .final .sub{font-style:italic}
+
+  /* boutons */
+  .btn{
+    font-family:var(--sans); font-weight:800; font-size:16px; cursor:pointer;
+    border:none; border-radius:999px; padding:15px 30px; color:#fff;
+    background:linear-gradient(135deg,#e0468a,var(--rose));
+    box-shadow:0 12px 24px -10px rgba(192,31,99,.7); transition:transform .15s, box-shadow .15s;
+  }
+  .btn:hover{transform:translateY(-2px); box-shadow:0 18px 30px -12px rgba(192,31,99,.8)}
+  .btn:active{transform:translateY(0)}
+  .btn:focus-visible{outline:3px solid var(--grape); outline-offset:3px}
+  .btn[disabled]{opacity:.45; cursor:not-allowed; transform:none; box-shadow:none}
+  .btn-no{
+    background:linear-gradient(135deg,#b79bd6,var(--grape)); font-weight:700;
+    box-shadow:0 10px 20px -10px rgba(155,115,196,.7);
+  }
+  .row{display:flex; gap:14px; justify-content:center; flex-wrap:wrap}
+
+  /* grille resto */
+  .grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:26px}
+  @media(max-width:380px){.grid{grid-template-columns:repeat(2,1fr)}}
+  .tile{
+    background:#fbf6fa; border:2px solid transparent; border-radius:18px;
+    padding:18px 8px; cursor:pointer; transition:transform .12s,border-color .12s,background .12s;
+    font-weight:700; font-size:14px; color:var(--ink);
+  }
+  .tile .e{font-size:34px; display:block; margin-bottom:8px}
+  .tile:hover{transform:translateY(-3px); background:#fdeef6}
+  .tile.sel{border-color:var(--rose); background:#fdeaf3}
+  .tile:focus-visible{outline:3px solid var(--grape); outline-offset:2px}
+
+  /* formulaire */
+  .field{text-align:left; margin-bottom:20px}
+  .field label{display:block; font-family:var(--serif); font-weight:600; font-size:18px; margin-bottom:8px}
+  .field input,.field select{
+    width:100%; font-family:var(--sans); font-size:16px; color:var(--ink);
+    padding:14px 16px; border:1.5px solid #ecd6e4; border-radius:14px; background:#fff;
+  }
+  .field input:focus,.field select:focus{outline:none; border-color:var(--rose)}
+
+  /* étapes */
+  .step{display:none}
+  .step.on{display:block}
+
+  /* liens calendrier */
+  .cal-links{display:flex; flex-direction:column; gap:12px; margin-top:6px}
+  .cal{
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    text-decoration:none; font-weight:800; font-size:15px; padding:14px;
+    border-radius:14px; border:1.5px solid #ecd6e4; color:var(--ink); background:#fff;
+    transition:background .12s,transform .12s;
+  }
+  .cal:hover{background:#fdeef6; transform:translateY(-2px)}
+  .cal.primary{background:linear-gradient(135deg,#e0468a,var(--rose)); color:#fff; border:none}
+  .recap{font-size:14px; color:var(--ink-soft); margin:18px 0 22px; line-height:1.6}
+  .recap b{color:var(--ink)}
+  .hearts{font-size:20px; letter-spacing:6px; color:var(--rose-soft); margin:14px 0}
+
+  /* confettis / pétales */
+  .fx{position:fixed; top:-20px; width:12px; height:12px; z-index:1; pointer-events:none; opacity:.9}
+  @keyframes fall{to{transform:translateY(110vh) rotate(540deg); opacity:0}}
+
+  @media(prefers-reduced-motion:reduce){
+    .card{animation:none}
+    .btn:hover,.tile:hover,.cal:hover{transform:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- ÉTAPE 1 : la question -->
+  <section class="step on" id="step-ask">
+    <div class="card">
+      <div class="avatar" id="askAvatar"></div>
+      <h1 id="askTitle"></h1>
+      <div class="row" style="margin-top:24px">
+        <button class="btn" id="yesBtn"></button>
+        <button class="btn btn-no" id="noBtn"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ÉTAPE 2 : célébration -->
+  <section class="step" id="step-celebrate">
+    <div class="card">
+      <div class="avatar">🧽</div>
+      <h1 id="celTitle"></h1>
+      <p class="sub" id="celSub"></p>
+      <button class="btn" id="celBtn"></button>
+    </div>
+  </section>
+
+  <!-- ÉTAPE 3 : resto -->
+  <section class="step" id="step-food">
+    <div class="card">
+      <h1 id="foodTitle" style="margin-bottom:4px"></h1>
+      <p class="sub" id="foodSub"></p>
+      <div class="grid" id="foodGrid"></div>
+      <button class="btn" id="foodBtn" disabled>suivant →</button>
+    </div>
+  </section>
+
+  <!-- ÉTAPE 4 : date & heure -->
+  <section class="step" id="step-when">
+    <div class="card">
+      <h1 id="whenTitle" style="margin-bottom:24px"></h1>
+      <div class="field">
+        <label>Quel jour ? 🗓️</label>
+        <input type="date" id="dateInput">
+      </div>
+      <div class="field">
+        <label>Quelle heure ? ⏰</label>
+        <select id="timeInput"><option value="">choisis un créneau...</option></select>
+      </div>
+      <button class="btn" id="whenBtn" disabled style="width:100%"></button>
+    </div>
+  </section>
+
+  <!-- ÉTAPE 5 : final + calendrier -->
+  <section class="step final" id="step-final">
+    <div class="card">
+      <h1 id="finalTitle"></h1>
+      <p class="sub" id="finalSub"></p>
+      <p class="recap" id="recap"></p>
+      <div class="cal-links">
+        <a class="cal primary" id="gcal" target="_blank" rel="noopener">📅 Ajouter à Google Agenda</a>
+        <a class="cal" id="ical" download="rendez-vous.ics">🍏 Apple / autre agenda (.ics)</a>
+      </div>
+      <div class="hearts">♥ ♥ ♥ ♥ ♥</div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  const C = CONFIG;
+  const $ = s => document.querySelector(s);
+  const choices = { food:null, date:null, time:null };
+
+  /* ---------- remplissage du texte ---------- */
+  if (C.ask.image) {
+    const a = $("#askAvatar"); a.outerHTML =
+      `<img class="avatar" id="askAvatar" src="${C.ask.image}" alt="">`;
+  } else { $("#askAvatar").textContent = C.ask.emoji; }
+  $("#askTitle").innerHTML = `${C.ask.emoji} ${C.ask.title} ${C.ask.emoji}`;
+  $("#yesBtn").innerHTML  = C.ask.yesLabel;
+  $("#noBtn").innerHTML   = C.ask.noLabel;
+  $("#celTitle").innerHTML= C.celebrate.title;
+  $("#celSub").textContent= C.celebrate.subtitle;
+  $("#celBtn").innerHTML  = C.celebrate.button;
+  $("#foodTitle").innerHTML = C.food.title;
+  $("#foodSub").textContent = C.food.subtitle;
+  $("#whenTitle").innerHTML = C.schedule.title;
+  $("#whenBtn").innerHTML   = C.schedule.button;
+  $("#finalTitle").innerHTML= C.final.title;
+  $("#finalSub").textContent= C.final.subtitle;
+
+  /* grille resto */
+  const grid = $("#foodGrid");
+  C.food.options.forEach(o=>{
+    const b = document.createElement("button");
+    b.className="tile"; b.type="button";
+    b.innerHTML = `<span class="e">${o.emoji}</span>${o.label}`;
+    b.onclick = ()=>{
+      grid.querySelectorAll(".tile").forEach(t=>t.classList.remove("sel"));
+      b.classList.add("sel"); choices.food=o.label; $("#foodBtn").disabled=false;
+    };
+    grid.appendChild(b);
+  });
+
+  /* créneaux horaires (label FR : 19h30) */
+  const sel = $("#timeInput");
+  C.schedule.timeSlots.forEach(t=>{
+    const o=document.createElement("option");
+    o.value=t; o.textContent=t.replace(":","h");
+    sel.appendChild(o);
+  });
+
+  /* date mini = aujourd'hui */
+  $("#dateInput").min = new Date().toISOString().split("T")[0];
+
+  /* ---------- navigation ---------- */
+  function go(id){
+    document.querySelectorAll(".step").forEach(s=>s.classList.remove("on"));
+    $("#"+id).classList.add("on");
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+
+  /* bouton NON qui s'enfuit */
+  const no = $("#noBtn");
+  function flee(){
+    const x = (Math.random()*2-1) * Math.min(140, window.innerWidth*0.3);
+    const y = (Math.random()*2-1) * 120;
+    no.style.position="relative";
+    no.style.transform=`translate(${x}px,${y}px) rotate(${(Math.random()*20-10)|0}deg)`;
+  }
+  no.addEventListener("mouseenter", flee);
+  no.addEventListener("click", e=>{ e.preventDefault(); flee(); });
+
+  $("#yesBtn").onclick = ()=>{ go("step-food"); burst(); };
+  $("#foodBtn").onclick= ()=> go("step-when");
+
+  function validateWhen(){
+    choices.date = $("#dateInput").value;
+    choices.time = $("#timeInput").value;
+    $("#whenBtn").disabled = !(choices.date && choices.time);
+  }
+  $("#dateInput").addEventListener("change", validateWhen);
+  $("#timeInput").addEventListener("change", validateWhen);
+
+  $("#whenBtn").onclick = ()=>{ finish(); go("step-final"); burst(); };
+
+  /* ---------- final : calendrier + email ---------- */
+  function pad(n){return String(n).padStart(2,"0");}
+  function finish(){
+    const [Y,M,D] = choices.date.split("-").map(Number);
+    const [h,m]   = choices.time.split(":").map(Number);
+    const start = new Date(Y, M-1, D, h, m);
+    const end   = new Date(start.getTime() + C.event.durationMinutes*60000);
+    const fmt = d => `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+    const title = C.event.title + (choices.food ? ` (${choices.food})` : "");
+
+    // récap visible
+    const dateFR = start.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+    $("#recap").innerHTML =
+      `On mange <b>${choices.food||"—"}</b><br>le <b>${dateFR}</b> à <b>${choices.time.replace(":","h")}</b> 🥂`;
+
+    // Google Agenda
+    const g = new URL("https://calendar.google.com/calendar/render");
+    g.searchParams.set("action","TEMPLATE");
+    g.searchParams.set("text",title);
+    g.searchParams.set("dates",`${fmt(start)}/${fmt(end)}`);
+    if (C.event.location) g.searchParams.set("location",C.event.location);
+    $("#gcal").href = g.toString();
+
+    // fichier .ics (Apple / Outlook)
+    const ics = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//date-invite//FR","BEGIN:VEVENT",
+      "UID:"+Date.now()+"@date-invite","DTSTART:"+fmt(start),"DTEND:"+fmt(end),
+      "SUMMARY:"+title, C.event.location?"LOCATION:"+C.event.location:"",
+      "END:VEVENT","END:VCALENDAR"].filter(Boolean).join("\r\n");
+    $("#ical").href = "data:text/calendar;charset=utf-8,"+encodeURIComponent(ics);
+
+    sendEmail(dateFR);
+  }
+
+  /* email via Web3Forms (aucun serveur requis) */
+  function sendEmail(dateFR){
+    if(!C.web3formsKey) return;
+    fetch("https://api.web3forms.com/submit",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Accept":"application/json"},
+      body:JSON.stringify({
+        access_key:C.web3formsKey,
+        subject:"💌 Elle a dit OUI — voici son choix",
+        from_name:"Date Invite",
+        Resto:choices.food,
+        Jour:dateFR,
+        Heure:choices.time.replace(":","h"),
+      })
+    }).catch(()=>{});
+  }
+
+  /* confettis */
+  function burst(){
+    if(matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+    const colors=["#e0468a","#9b73c4","#f4c4d8","#c01f63","#ffd27a"];
+    for(let i=0;i<60;i++){
+      const c=document.createElement("div");
+      c.className="fx";
+      c.style.left=Math.random()*100+"vw";
+      c.style.background=colors[i%colors.length];
+      c.style.borderRadius=Math.random()>.5?"50%":"2px";
+      c.style.animation=`fall ${2+Math.random()*2}s linear ${Math.random()*0.5}s forwards`;
+      document.body.appendChild(c);
+      setTimeout(()=>c.remove(),4500);
+    }
+  }
+})();
+</script>
+</body>
+</html>
